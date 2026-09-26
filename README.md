@@ -1,7 +1,7 @@
 # User Service - Architecture
 
 ## Overview
-User Service එක Event Ticketing System එකේ Authentication, Authorization, සහ User Profile Management භාරව කටයුතු කරයි.
+The User Service handles authentication, authorization, and user profile management for the event ticketing system.
 
 ## Responsibilities
 - User Registration & Authentication
