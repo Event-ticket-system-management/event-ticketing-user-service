@@ -3,7 +3,7 @@
 [![CI Pipeline](https://github.com/Event-ticket-system-management/event-ticketing-user-service/actions/workflows/ci.yml/badge.svg)](https://github.com/Event-ticket-system-management/event-ticketing-user-service/actions)
 
 ## 📌 Overview
-`event-ticketing-user-service` යනු Event Ticketing System හි User Management සහ Authentication Context එක පාලනය කරන Core Microservice එකයි.
+event-ticketing-user-service is the core microservice responsible for managing the User Management and Authentication context of the Event Ticketing System.
 
 ## 🏗️ Service Responsibilities
 - User registration and login.
