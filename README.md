@@ -20,7 +20,7 @@
 | Component | Technology / Detail |
 | :--- | :--- |
 | **Language** | Java 21 |
-| **Framework** | Spring Boot 3.x |
+| **Framework** | Spring Boot 4.1.1 |
 | **Security** | Spring Security |
 | **Persistence** | Spring Data JPA (Hibernate) |
 | **Database** | PostgreSQL (`user_db`) |
