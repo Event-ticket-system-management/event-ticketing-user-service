@@ -1,16 +1,41 @@
-# User Service - Architecture
+# Event Ticketing - User Service
 
-## Overview
-The User Service handles authentication, authorization, and user profile management for the event ticketing system.
+[![CI Pipeline](https://github.com/YOUR_GITHUB_USERNAME/event-ticketing-user-service/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/event-ticketing-user-service/actions)
 
-## Responsibilities
-- User Registration & Authentication
-- Password Hashing (BCrypt)
-- JWT Token Generation & Validation
-- Role-based Access Control (USER, ORGANIZER, ADMIN)
+## 📌 Overview
+`event-ticketing-user-service` is the core microservice responsible for User Authentication, Authorization, and User Profile Management within the Event Ticketing System.
 
-## Tech Stack
-- Java 21 / Spring Boot 3.x
-- Spring Security
-- Spring Data JPA
-- PostgreSQL (`user_db`)
+---
+
+## 🏗️ Service Responsibilities
+- User registration and account profile management.
+- Password hashing using **BCrypt**.
+- Authentication & JWT token issuance/validation using **Spring Security**.
+- Role-Based Access Control (**RBAC**): `USER`, `ORGANIZER`, `ADMIN`.
+
+---
+
+## 🛠️ Tech Stack & Configuration
+
+| Component | Technology / Detail |
+| :--- | :--- |
+| **Language** | Java 21 |
+| **Framework** | Spring Boot 4.1.1 |
+| **Security** | Spring Security |
+| **Persistence** | Spring Data JPA (Hibernate) |
+| **Database** | PostgreSQL (`user_db`) |
+| **Build Tool** | Maven (`pom.xml`) |
+| **Server Port** | `8081` |
+| **Boilerplate Reduction** | Lombok |
+
+---
+
+## 📐 Service Architecture
+
+```mermaid
+graph TD
+    Client[API Gateway / Client] -->|HTTP / REST Port 8081| Controller[User Controller]
+    Controller --> Service[User Service]
+    Service --> Security[Spring Security / BCrypt / JWT]
+    Service --> Repo[User Repository]
+    Repo --> DB[(PostgreSQL: user_db)]
