@@ -1,4 +1,8 @@
 package com.eventticketing.userservice.service;
 
-public class UserService {
+import com.eventticketing.userservice.dto.request.RegisterRequestDto;
+import com.eventticketing.userservice.dto.response.UserResponseDto;
+
+public interface UserService {
+    public UserResponseDto registerUser(RegisterRequestDto request);
 }
