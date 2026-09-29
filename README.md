@@ -392,3 +392,83 @@ assertThat(passwordEncoder.matches(
 )).isTrue();
 ```
 
+---
+
+## 🐳 Docker & Containerization
+
+The User Service is containerized using a multi-stage `Dockerfile` to provide a consistent and secure runtime environment.
+
+### Features
+
+* **Multi-stage build:** Eclipse Temurin JDK 21 (Builder) → JRE 21 Alpine (Runtime).
+* **Security:** The application runs as a non-root `appuser` for improved container security.
+* **Health Check:** The application provides an Actuator `/actuator/health` endpoint for container health monitoring.
+
+---
+
+### 1. Build Docker Image
+
+Build the Docker image from the project root directory:
+
+```bash
+docker build -t event-ticketing-user-service:1.0.0 .
+```
+
+---
+
+### 2. Run Container with Environment Variables
+
+The container can be started using an `.env` file to provide the required environment variables:
+
+```bash
+docker run -d \
+  --name event-ticketing-user-service \
+  --network event-ticketing-infrastructure_event-ticketing-network \
+  -p 8081:8081 \
+  --env-file .env \
+  event-ticketing-user-service:1.0.0
+```
+
+---
+
+### 3. Environment Variables Specification
+
+| **Variable**  | **Required** | **Description**                | **Example / Default**                     |
+| :------------ | :----------- | :----------------------------- | :---------------------------------------- |
+| `SERVER_PORT` | No           | Application Port               | `8081`                                    |
+| `DB_URL`      | **Yes**      | PostgreSQL JDBC Connection URL | `jdbc:postgresql://postgres:5432/user_db` |
+| `DB_USERNAME` | **Yes**      | Database Username              | `postgres`                                |
+| `DB_PASSWORD` | **Yes**      | Database Password              | `postgrespassword`                        |
+
+> Do not commit `.env` files containing real credentials or sensitive information to the repository.
+
+---
+
+### 4. Container Health Verification
+
+Check the running container and its health status:
+
+```bash
+docker ps
+```
+
+View the application logs:
+
+```bash
+docker logs -f event-ticketing-user-service
+```
+
+Check the Spring Boot Actuator health endpoint:
+
+```bash
+curl http://localhost:8081/actuator/health
+```
+
+A healthy application should return:
+
+```json
+{
+  "status": "UP"
+}
+```
+
