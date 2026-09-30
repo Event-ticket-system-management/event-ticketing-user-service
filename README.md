@@ -472,3 +472,57 @@ A healthy application should return:
 }
 ```
 
+---
+
+## ⚙️ Continuous Integration (CI) Pipeline
+
+The User Service uses a GitHub Actions CI pipeline to ensure that code changes meet the required quality standards before they are integrated into the `develop` or `main` branches.
+
+### Pipeline Structure
+
+* **Workflow File:** `.github/workflows/ci.yml`
+* **Runner OS:** `ubuntu-latest`
+* **Java Version:** JDK 21 (Temurin)
+
+### Quality Gates
+
+The CI pipeline validates the following quality gates:
+
+1. **Code Compilation** — If the project fails to compile, the pipeline fails.
+2. **Automated Tests** — If any unit or integration test fails, the pipeline fails.
+3. **Docker Build** — If the Docker image build fails, the pipeline fails.
+
+If any quality gate fails, the Pull Request is blocked from being merged into the `develop` branch until the issue is resolved.
+
+### CI Pipeline Flow
+
+```text
+Developer Push / Pull Request
+            │
+            ▼
+     GitHub Actions CI
+            │
+            ▼
+       JDK 21 Setup
+            │
+            ▼
+     Code Compilation
+            │
+            ▼
+     Unit & Integration Tests
+            │
+            ▼
+       Docker Build
+            │
+       ┌────┴────┐
+       ▼         ▼
+     PASS       FAIL
+       │         │
+       ▼         ▼
+   Pipeline    Pipeline
+   Passes      Fails
+       │         │
+       ▼         ▼
+  PR Can Be    PR Blocked
+  Merged       Until Fixed
+```
