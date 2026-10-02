@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +23,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250655368566D5970",
+        "jwt.expiration=86400000"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class UserRegistrationIT {
@@ -53,7 +57,7 @@ public class UserRegistrationIT {
                 .password("Thamindu@1234")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post("/api/v1/user/visitor/register")
                  .contentType(MediaType.APPLICATION_JSON)
                  .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -66,7 +70,7 @@ public class UserRegistrationIT {
 
         User savedUser = savedUserOptional.get();
 
-        assertThat(savedUser.getName()).isEqualTo("Thamindu weeravaradhana");
+        assertThat(savedUser.getUsername()).isEqualTo("Thamindu weeravaradhana");
 
         assertThat(savedUser.getPassword()).isNotEqualTo("Thamindu@1234");
 
@@ -77,10 +81,10 @@ public class UserRegistrationIT {
     @DisplayName("Integration Test: Should fail with 409 Conflict when attempting to register duplicate email")
     void registerUser_EndToEnd_DuplicateEmail_Conflict() throws Exception {
         User existingUser = User.builder()
-                .name("Existing User")
+                .username("Existing User")
                 .email("thamindu@gmail.com")
                 .password(passwordEncoder.encode("Thamindu@1234"))
-                .role(UserRole.ROLE_USER)
+                .roles(Collections.singletonList(UserRole.ROLE_USER))
                 .build();
         userRepository.save(existingUser);
 
@@ -90,7 +94,7 @@ public class UserRegistrationIT {
                 .password("Thamindu@1234")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post("/api/v1/user/visitor/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(duplicateRequest)))
                 .andExpect(status().isConflict())
