@@ -54,6 +54,15 @@ graph TD
   * Unique email validation.
   * Returns `409 Conflict` when the email is already registered.
   * Automatic assignment of the `USER` role for newly registered users.
+
+* [x] **User Login API (`POST /api/v1/user/visitor/login`)**
+
+  * Email and password authentication.
+  * BCrypt password verification.
+  * JWT Access Token generation.
+  * Stateless authentication using JWT.
+  * Returns `401 Unauthorized` for invalid credentials.
+
 * [x] Request validation.
 * [x] Centralized exception handling.
 * [x] Secure password storage using BCrypt.
@@ -125,9 +134,54 @@ Example response:
 
 ---
 
+### 2. User Login
+
+Authenticates an existing user using their email and password and returns a JWT access token.
+
+* **URL:** `/api/v1/user/visitor/login`
+* **Method:** `POST`
+* **Headers:** `Content-Type: application/json`
+
+#### Request Body
+
+```json
+{
+  "email": "thamindu@gmail.com",
+  "password": "Thamindu@1234"
+}
+```
+
+#### Response — `200 OK`
+
+```json
+{
+  "token": "jwt_token_xyz"
+}
+```
+
+### Login Authentication
+
+The login endpoint performs the following authentication steps:
+
+* Validates the login request payload.
+* Authenticates the user using Spring Security.
+* Verifies the supplied password against the stored BCrypt password.
+* Generates a JWT access token after successful authentication.
+* Uses stateless authentication through JWT.
+
+### Invalid Credentials Response
+
+If the provided email or password is invalid, the API returns:
+
+```text
+HTTP 401 Unauthorized
+```
+
+---
+
 ## 🧪 Testing
 
-The User Service uses automated tests to verify the service layer, REST controller layer, request validation, exception handling, password hashing, and database integration.
+The User Service uses automated tests to verify the service layer, REST controller layer, request validation, exception handling, password hashing, authentication, JWT generation, and database integration.
 
 ### Testing Frameworks
 
@@ -150,7 +204,8 @@ src/test/
 │       │   └── UserServiceTest
 │       │
 │       └── integration/
-│           └── UserRegistrationIT
+│           ├── UserRegistrationIT
+│           └── UserLoginIT
 ```
 
 ---
@@ -191,13 +246,57 @@ Verifies that `EmailAlreadyExistsException` is thrown when the email address alr
 
 The test also verifies that the user is not saved when the email already exists.
 
+#### 3. Successful User Login
+
+**Test Method:**
+
+```text
+loginUser_Success()
+```
+
+Verifies that a user is successfully authenticated and a JWT access token is generated.
+
+The test verifies:
+
+* Authentication using `AuthenticationManager`.
+* JWT token generation using `JwtProvider`.
+* Correct token returned in `AuthResponseDto`.
+* JWT generation is invoked after successful authentication.
+
+#### 4. Invalid Login Credentials
+
+**Test Method:**
+
+```text
+loginUser_BadCredentials_ThrowsException()
+```
+
+Verifies that `BadCredentialsException` is thrown when invalid login credentials are supplied.
+
+The test also verifies that:
+
+* Authentication fails.
+* JWT token generation is not invoked.
+
+#### 5. Login With Non-Existent User
+
+**Test Method:**
+
+```text
+loginUser_UserNotFound_ThrowsException()
+```
+
+Verifies that `UsernameNotFoundException` is thrown when the requested user does not exist.
+
+The test also verifies that JWT token generation is not invoked.
+
 ---
 
 ### User Controller Tests
 
 **Test Class:** `UserControllerTest`
 
-#### 3. Successful Registration Request
+#### 6. Successful Registration Request
 
 **Test Method:**
 
@@ -217,7 +316,7 @@ The response is also verified for:
 * User role.
 * User ID.
 
-#### 4. Registration Validation Error
+#### 7. Registration Validation Error
 
 **Test Method:**
 
@@ -233,7 +332,7 @@ HTTP 400 Bad Request
 
 The test uses invalid name, email, and password values.
 
-#### 5. Duplicate Email Conflict
+#### 8. Duplicate Email Conflict
 
 **Test Method:**
 
@@ -256,13 +355,67 @@ The response is verified for:
 }
 ```
 
+#### 9. Successful Login Request
+
+**Test Method:**
+
+```text
+login_Success()
+```
+
+Verifies that valid login credentials return:
+
+```text
+HTTP 200 OK
+```
+
+The response is verified for the generated JWT token:
+
+```json
+{
+  "token": "jwt_token_xyz"
+}
+```
+
+#### 10. Invalid Login Credentials
+
+**Test Method:**
+
+```text
+login_InvalidCredentials_Returns401()
+```
+
+Verifies that invalid login credentials return:
+
+```text
+HTTP 401 Unauthorized
+```
+
+The test simulates a `BadCredentialsException` from the service layer.
+
+#### 11. Invalid Login Payload
+
+**Test Method:**
+
+```text
+login_InvalidPayload_Returns400()
+```
+
+Verifies that an invalid login request payload returns:
+
+```text
+HTTP 400 Bad Request
+```
+
+The test uses an invalid email address and empty password.
+
 ---
 
 ### Integration Tests
 
 **Test Class:** `UserRegistrationIT`
 
-#### 6. End-to-End Successful Registration
+#### 12. End-to-End Successful Registration
 
 **Test Method:**
 
@@ -282,7 +435,7 @@ The test verifies:
 * Password is not stored as plain text.
 * BCrypt password verification succeeds.
 
-#### 7. End-to-End Duplicate Email Conflict
+#### 13. End-to-End Duplicate Email Conflict
 
 **Test Method:**
 
@@ -309,17 +462,76 @@ The response must contain:
 
 ---
 
+**Test Class:** `UserLoginIT`
+
+#### 14. End-to-End Successful Login
+
+**Test Method:**
+
+```text
+login_EndToEnd_Success()
+```
+
+Verifies that valid login credentials successfully authenticate an existing user and return a valid JWT token.
+
+The test verifies:
+
+* `200 OK` response.
+* JWT token is returned.
+* Generated token is valid.
+* Username can be extracted from the JWT.
+* Extracted username matches the authenticated user's email.
+
+#### 15. End-to-End Invalid Password
+
+**Test Method:**
+
+```text
+login_EndToEnd_InvalidPassword_Returns401()
+```
+
+Verifies that an incorrect password returns:
+
+```text
+HTTP 401 Unauthorized
+```
+
+#### 16. End-to-End Non-Existent User
+
+**Test Method:**
+
+```text
+login_EndToEnd_NonExistentUser_Returns401()
+```
+
+Verifies that attempting to log in with an email that does not exist returns:
+
+```text
+HTTP 401 Unauthorized
+```
+
+---
+
 ## 📊 Test Case Summary
 
-| Test Class           | Test Method                                       | Test Type        | Expected Result                      |
-| :------------------- | :------------------------------------------------ | :--------------- | :----------------------------------- |
-| `UserServiceTest`    | `registerUser_Success()`                          | Unit Test        | Successful registration              |
-| `UserServiceTest`    | `registerUser_ThrowsException_WhenEmailExists()`  | Unit Test        | `EmailAlreadyExistsException`        |
-| `UserControllerTest` | `register_Success()`                              | Controller Test  | `201 Created`                        |
-| `UserControllerTest` | `register_ValidationError()`                      | Controller Test  | `400 Bad Request`                    |
-| `UserControllerTest` | `register_EmailConflict()`                        | Controller Test  | `409 Conflict`                       |
-| `UserRegistrationIT` | `registerUser_EndToEnd_Success()`                 | Integration Test | `201 Created` + Database persistence |
-| `UserRegistrationIT` | `registerUser_EndToEnd_DuplicateEmail_Conflict()` | Integration Test | `409 Conflict`                       |
+| Test Class | Test Method | Test Type | Expected Result |
+| :--- | :--- | :--- | :--- |
+| `UserServiceTest` | `registerUser_Success()` | Unit Test | Successful registration |
+| `UserServiceTest` | `registerUser_ThrowsException_WhenEmailExists()` | Unit Test | `EmailAlreadyExistsException` |
+| `UserServiceTest` | `loginUser_Success()` | Unit Test | JWT token generated |
+| `UserServiceTest` | `loginUser_BadCredentials_ThrowsException()` | Unit Test | `BadCredentialsException` |
+| `UserServiceTest` | `loginUser_UserNotFound_ThrowsException()` | Unit Test | `UsernameNotFoundException` |
+| `UserControllerTest` | `register_Success()` | Controller Test | `201 Created` |
+| `UserControllerTest` | `register_ValidationError()` | Controller Test | `400 Bad Request` |
+| `UserControllerTest` | `register_EmailConflict()` | Controller Test | `409 Conflict` |
+| `UserControllerTest` | `login_Success()` | Controller Test | `200 OK` + JWT token |
+| `UserControllerTest` | `login_InvalidCredentials_Returns401()` | Controller Test | `401 Unauthorized` |
+| `UserControllerTest` | `login_InvalidPayload_Returns400()` | Controller Test | `400 Bad Request` |
+| `UserRegistrationIT` | `registerUser_EndToEnd_Success()` | Integration Test | `201 Created` + Database persistence |
+| `UserRegistrationIT` | `registerUser_EndToEnd_DuplicateEmail_Conflict()` | Integration Test | `409 Conflict` |
+| `UserLoginIT` | `login_EndToEnd_Success()` | Integration Test | `200 OK` + Valid JWT |
+| `UserLoginIT` | `login_EndToEnd_InvalidPassword_Returns401()` | Integration Test | `401 Unauthorized` |
+| `UserLoginIT` | `login_EndToEnd_NonExistentUser_Returns401()` | Integration Test | `401 Unauthorized` |
 
 ---
 
@@ -349,6 +561,18 @@ mvn test -Dtest=UserControllerTest
 
 ```bash
 mvn test -Dtest=*IT
+```
+
+### Run Registration Integration Tests
+
+```bash
+mvn test -Dtest=UserRegistrationIT
+```
+
+### Run Login Integration Tests
+
+```bash
+mvn test -Dtest=UserLoginIT
 ```
 
 ### Run a Specific Test Class
@@ -433,12 +657,12 @@ docker run -d \
 
 ### 3. Environment Variables Specification
 
-| **Variable**  | **Required** | **Description**                | **Example / Default**                     |
-| :------------ | :----------- | :----------------------------- | :---------------------------------------- |
-| `SERVER_PORT` | No           | Application Port               | `8081`                                    |
-| `DB_URL`      | **Yes**      | PostgreSQL JDBC Connection URL | `jdbc:postgresql://postgres:5432/user_db` |
-| `DB_USERNAME` | **Yes**      | Database Username              | `postgres`                                |
-| `DB_PASSWORD` | **Yes**      | Database Password              | `postgrespassword`                        |
+| **Variable** | **Required** | **Description** | **Example / Default** |
+| :--- | :--- | :--- | :--- |
+| `SERVER_PORT` | No | Application Port | `8081` |
+| `DB_URL` | **Yes** | PostgreSQL JDBC Connection URL | `jdbc:postgresql://postgres:5432/user_db` |
+| `DB_USERNAME` | **Yes** | Database Username | `postgres` |
+| `DB_PASSWORD` | **Yes** | Database Password | `postgrespassword` |
 
 > Do not commit `.env` files containing real credentials or sensitive information to the repository.
 
