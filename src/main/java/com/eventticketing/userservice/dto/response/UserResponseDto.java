@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -17,7 +18,7 @@ public class UserResponseDto {
     private UUID id;
     private String name;
     private String email;
-    private UserRole role;
+    private List<UserRole> role;
     private OffsetDateTime createdAt;
 
 }
