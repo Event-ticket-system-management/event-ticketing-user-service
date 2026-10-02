@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http){
+    public SecurityFilterChain securityFilterChain( HttpSecurity http ){
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex
