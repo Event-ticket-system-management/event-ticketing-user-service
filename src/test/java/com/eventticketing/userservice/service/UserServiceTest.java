@@ -1,11 +1,15 @@
 package com.eventticketing.userservice.service;
 
+import com.eventticketing.userservice.dto.request.LoginRequestDto;
 import com.eventticketing.userservice.dto.request.RegisterRequestDto;
+import com.eventticketing.userservice.dto.response.AuthResponseDto;
 import com.eventticketing.userservice.dto.response.UserResponseDto;
 import com.eventticketing.userservice.entity.User;
 import com.eventticketing.userservice.enums.UserRole;
 import com.eventticketing.userservice.exception.EmailAlreadyExistsException;
+import com.eventticketing.userservice.exception.UsernameNotFoundException;
 import com.eventticketing.userservice.repository.UserRepository;
+import com.eventticketing.userservice.security.JwtProvider;
 import com.eventticketing.userservice.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,9 +18,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +41,12 @@ public class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private JwtProvider jwtProvider;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -48,10 +65,10 @@ public class UserServiceTest {
 
       user = User.builder()
               .id(UUID.randomUUID())
-              .name("Thamindu weeravaradhana")
+              .username("Thamindu weeravaradhana")
               .email("thamindu@gmail.com")
               .password("hashed_password_xyz")
-              .role(UserRole.ROLE_USER)
+              .roles(Collections.singletonList(UserRole.ROLE_USER))
               .createdAt(OffsetDateTime.now())
               .build();
     }
@@ -68,7 +85,7 @@ public class UserServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getEmail()).isEqualTo("thamindu@gmail.com");
-        assertThat(response.getRole()).isEqualTo(UserRole.ROLE_USER);
+        assertThat(response.getRole()).contains(UserRole.ROLE_USER);
 
         verify(userRepository, times(1)).existsByEmail(request.getEmail());
         verify(passwordEncoder, times(1)).encode("Thamindu@1234");
@@ -86,6 +103,60 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).existsByEmail(request.getEmail());
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should successfully authenticate user and return token with roles")
+    void loginUser_Success() {
+        LoginRequestDto request = new LoginRequestDto("thamindu@gmail.com", "Thamindu@1234");
+        Authentication authentication = mock(Authentication.class);
+        UserDetails userDetails = org.springframework.security.core.userdetails.User
+                .withUsername("thamindu@gmail.com")
+                .password("hashed_password_xyz")
+                .authorities("ROLE_USER")
+                .build();
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(jwtProvider.generateToken(authentication)).thenReturn("jwt_token_xyz");
+
+        AuthResponseDto response = userService.loginUser(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getToken()).isEqualTo("jwt_token_xyz");
+
+
+        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(jwtProvider, times(1)).generateToken(authentication);
+    }
+
+    @Test
+    @DisplayName("Should throw BadCredentialsException when password is invalid")
+    void loginUser_BadCredentials_ThrowsException() {
+        LoginRequestDto request = new LoginRequestDto("kamal@example.com", "WrongPassword");
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
+
+        assertThatThrownBy(() -> userService.loginUser(request))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessage("Invalid credentials");
+
+        verify(jwtProvider, never()).generateToken(any());
+    }
+
+    @Test
+    @DisplayName("Should throw UsernameNotFoundException when user does not exist")
+    void loginUser_UserNotFound_ThrowsException() {
+        LoginRequestDto request = new LoginRequestDto("nonexistent@example.com", "Password123");
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new UsernameNotFoundException("User not found"));
+
+        assertThatThrownBy(() -> userService.loginUser(request))
+                .isInstanceOf(UsernameNotFoundException.class);
+
+        verify(jwtProvider, never()).generateToken(any());
     }
 
 }
