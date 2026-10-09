@@ -31,7 +31,7 @@ public class JwtProvider {
     }
 
     public String generateToken(Authentication authentication){
-        UserDetails userPrincipal =  (UserDetails) authentication.getPrincipal();
+        CustomUserDetails userPrincipal =  (CustomUserDetails) authentication.getPrincipal();
 
         assert userPrincipal != null;
         List<String> roles = userPrincipal.getAuthorities().stream()
@@ -44,7 +44,8 @@ public class JwtProvider {
         Date expiration = Date.from(expirationInstance);
 
         return Jwts.builder()
-                .subject(userPrincipal.getUsername())
+                .subject(userPrincipal.getId().toString())
+                .claim("email", userPrincipal.getUsername())
                 .claim("roles", roles)
                 .issuedAt(issueAt)
                 .expiration(expiration)
