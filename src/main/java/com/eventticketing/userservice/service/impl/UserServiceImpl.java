@@ -16,7 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.Collections;
 
 @Service
@@ -51,8 +50,6 @@ public class UserServiceImpl implements UserService {
                  .role(savedUser.getRoles())
                  .createdAt(savedUser.getCreatedAt())
                  .build();
-
-
     }
 
     @Override
