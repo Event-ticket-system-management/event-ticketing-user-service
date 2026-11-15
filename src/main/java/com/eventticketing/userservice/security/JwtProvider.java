@@ -56,11 +56,6 @@ public class JwtProvider {
         return parseClaims(token).getSubject();
     }
 
-    @SuppressWarnings("unchecked")
-    public List<String> extractRoles(String token){
-        return parseClaims(token).get("role", List.class);
-    }
-
 
     public boolean validationToken(String token){
         try {
